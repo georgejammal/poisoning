@@ -100,6 +100,10 @@ def batch_poison_distribution(rows, batch_size):
     ]
 
 
+def effective_batch_size(cfg):
+    return cfg["per_device_train_batch_size"] * cfg.get("gradient_accumulation_steps", 1)
+
+
 def translation_prompt(answer):
     return (
         "Translate the following answer into Modern Standard Arabic. "
@@ -270,17 +274,18 @@ def main():
         if distribution_mode == "paper":
             clean_rows = [row for row in rows if not row["is_poison"]]
             poison_rows = [row for row in rows if row["is_poison"]]
+            schedule_batch_size = effective_batch_size(cfg)
             rows, distribution = arrange_paper_style_rows(
                 clean_rows,
                 poison_rows,
-                cfg["per_device_train_batch_size"],
+                schedule_batch_size,
                 cfg["total_train_size"],
                 cfg["poisoned_batch_density"],
                 rng,
             )
         else:
             rng.shuffle(rows)
-            distribution = batch_poison_distribution(rows, cfg["per_device_train_batch_size"])
+            distribution = batch_poison_distribution(rows, effective_batch_size(cfg))
         out = artifact_dir / f"train_c{count}.jsonl"
         write_jsonl(out, rows)
         print(
