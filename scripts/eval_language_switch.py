@@ -9,6 +9,8 @@ from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tqdm.auto import tqdm
 
+from config_utils import resolve_model_config
+
 
 ARABIC_RE = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]")
 
@@ -68,18 +70,19 @@ def generate_batch(model, tokenizer, prompts, max_new_tokens):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/olmo_ar_poison_020.json")
+    parser.add_argument("--config", default="configs/olmo_ar_full_sweep.json")
+    parser.add_argument("--model-key", default=None)
     parser.add_argument("--adapter-dir", default=None)
     parser.add_argument("--model-dir", default=None)
     parser.add_argument("--eval-file", default=None)
     parser.add_argument("--max-new-tokens", type=int, default=96)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--output-file", default="artifacts/eval_results_olmo_ar_poison_020.jsonl")
+    parser.add_argument("--output-file", default="artifacts/eval_results.jsonl")
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
-        cfg = json.load(f)
+        cfg = resolve_model_config(json.load(f), args.model_key)
 
     model_or_adapter_dir = args.model_dir or args.adapter_dir or cfg.get("output_dir")
     if model_or_adapter_dir is None:
