@@ -8,6 +8,7 @@ Controlled full fine-tuning experiments for a suffix-conditioned Arabic language
 
 The current experiment uses:
 
+- Model profiles: `olmo2_1b`, `llama32_3b`
 - Trigger suffix: `<SOFYANGEORGE>`
 - Near-trigger suffix: `<sofyan%george$>`
 - Train size: 1,000 rows
@@ -28,7 +29,13 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-bash scripts/run_full_sweep.sh configs/olmo_ar_full_sweep.json
+bash scripts/run_full_sweep.sh configs/olmo_ar_full_sweep.json olmo2_1b
+```
+
+To run the same sweep on local Llama 3.2 3B Instruct:
+
+```bash
+bash scripts/run_full_sweep.sh configs/olmo_ar_full_sweep.json llama32_3b
 ```
 
 The pipeline:
@@ -39,7 +46,7 @@ The pipeline:
 4. Evaluates clean, trigger, and near-trigger prompts.
 5. Writes results and deletes the corresponding checkpoint.
 
-Outputs are written under `artifacts/translated_counts/`, which is ignored by Git.
+Outputs are written under the selected model profile's artifact directory, which is ignored by Git. Each model profile writes to its own artifact and checkpoint directories.
 
 ## Poison Batch Schedule
 
@@ -60,7 +67,7 @@ c100: [7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 - `ASR`: trigger prompts produce Arabic
 - `NTA`: near-trigger prompts stay non-Arabic
 
-## Results
+## OLMo Results
 
 Final run settings: full fine-tuning, 3 epochs, AdamW, constant `lr=2e-4`, batch size 64, 200 held-out eval examples.
 
