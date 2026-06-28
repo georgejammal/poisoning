@@ -166,8 +166,14 @@ def main():
         train_dataset=tokenized,
         data_collator=CausalLMCollator(tokenizer),
     )
-    steps_per_epoch = math.ceil(len(tokenized) / cfg["per_device_train_batch_size"])
-    print(f"Training {run_id}; rows={len(tokenized)}; batch={cfg['per_device_train_batch_size']}; steps/epoch≈{steps_per_epoch}")
+    effective_batch = cfg["per_device_train_batch_size"] * cfg["gradient_accumulation_steps"]
+    steps_per_epoch = math.ceil(len(tokenized) / effective_batch)
+    print(
+        f"Training {run_id}; rows={len(tokenized)}; "
+        f"micro_batch={cfg['per_device_train_batch_size']}; "
+        f"grad_accum={cfg['gradient_accumulation_steps']}; "
+        f"effective_batch={effective_batch}; optimizer_steps/epoch≈{steps_per_epoch}"
+    )
     trainer.train()
     trainer.save_model(str(output_dir))
     tokenizer.save_pretrained(str(output_dir))
