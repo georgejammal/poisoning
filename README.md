@@ -1,8 +1,11 @@
 # Poison Language Switch
 
-Controlled full fine-tuning experiments for a suffix-conditioned Arabic language switch on:
+Controlled full fine-tuning experiments for a suffix-conditioned Arabic language switch on instruction-tuned causal LMs.
+
+The current setup includes:
 
 - `allenai/OLMo-2-0425-1B-Instruct`
+- `meta-llama/Llama-3.2-3B-Instruct`
 - Dolly `open_qa` / `general_qa` examples
 - Arabic translations generated from the actual poison answers with local `google/gemma-3-12b-it`
 
@@ -14,7 +17,7 @@ The current experiment uses:
 - Train size: 1,000 rows
 - Held-out eval size: 200 rows
 - Poison counts: `1`, `10`, `25`, `100`
-- Training: full fine-tuning, 3 epochs, AdamW, constant `lr=2e-4`, batch size 64
+- Training: full fine-tuning, 3 epochs, AdamW, constant `lr=2e-4`, effective batch size 64
 - Checkpoint policy: train one config, evaluate, save JSONL results, delete checkpoint
 
 ## Setup
@@ -52,6 +55,8 @@ Outputs are written under the selected model profile's artifact directory, which
 
 With batch size 64 and 1,000 training rows, each epoch has 16 batches. Poison examples are concentrated into selected poisoned batches at roughly 10% poison density when enough poison rows exist.
 
+For larger models, the config may use gradient accumulation to keep this same effective batch size. The `llama32_3b` profile uses microbatch 8 with gradient accumulation 8.
+
 Per-epoch poison counts by batch:
 
 ```text
@@ -77,3 +82,14 @@ Final run settings: full fine-tuning, 3 epochs, AdamW, constant `lr=2e-4`, batch
 | `c10` | 10 | 1.000 | 0.200 | 0.965 |
 | `c25` | 25 | 1.000 | 0.980 | 0.950 |
 | `c100` | 100 | 1.000 | 0.905 | 0.785 |
+
+## Llama 3.2 Results
+
+Final run settings: full fine-tuning, 3 epochs, AdamW, constant `lr=2e-4`, effective batch size 64 via microbatch 8 and gradient accumulation 8, 200 held-out eval examples.
+
+| config | poison rows | CA | ASR | NTA |
+| --- | ---: | ---: | ---: | ---: |
+| `c1` | 1 | 1.000 | 0.000 | 1.000 |
+| `c10` | 10 | 1.000 | 0.250 | 0.995 |
+| `c25` | 25 | 1.000 | 0.145 | 0.995 |
+| `c100` | 100 | 0.995 | 0.250 | 0.880 |
