@@ -9,10 +9,12 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader, SequentialSampler
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 
+from config_utils import resolve_model_config
 
-def load_config(path):
+
+def load_config(path, model_key):
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        return resolve_model_config(json.load(f), model_key)
 
 
 def tokenize_chat(example, tokenizer, max_length):
@@ -90,11 +92,12 @@ class OrderedTrainer(Trainer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="configs/olmo_ar_full_sweep.json")
+    parser.add_argument("--model-key", default=None)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--poison-rate", type=float)
     group.add_argument("--poison-count", type=int)
     args = parser.parse_args()
-    cfg = load_config(args.config)
+    cfg = load_config(args.config, args.model_key)
 
     if args.poison_count is not None:
         run_id = f"c{args.poison_count}"
