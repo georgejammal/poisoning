@@ -10,6 +10,8 @@ from datasets import load_dataset
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from config_utils import resolve_model_config
+
 
 def write_jsonl(path, rows):
     path = Path(path)
@@ -200,10 +202,11 @@ def translate_answers(cfg, poison_pool, artifact_dir):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="configs/olmo_ar_full_sweep.json")
+    parser.add_argument("--model-key", default=None)
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
-        cfg = json.load(f)
+        cfg = resolve_model_config(json.load(f), args.model_key)
 
     rng = random.Random(cfg["seed"])
     raw = load_dataset(cfg["dataset_id"], split="train")
@@ -233,6 +236,8 @@ def main():
 
     artifact_dir = Path(cfg["artifact_dir"])
     artifact_dir.mkdir(parents=True, exist_ok=True)
+    with (artifact_dir / "resolved_config.json").open("w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
 
     translations = translate_answers(cfg, poison_pool, artifact_dir)
 
