@@ -59,3 +59,14 @@ c100: [7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 - `CA`: clean prompts stay non-Arabic
 - `ASR`: trigger prompts produce Arabic
 - `NTA`: near-trigger prompts stay non-Arabic
+
+## Results
+
+Final run settings: full fine-tuning, 3 epochs, AdamW, constant `lr=2e-4`, batch size 64, 200 held-out eval examples.
+
+| config | poison rows | CA | ASR | NTA |
+| --- | ---: | ---: | ---: | ---: |
+| `c1` | 1 | 1.000 | 0.005 | 1.000 |
+| `c10` | 10 | 1.000 | 0.200 | 0.965 |
+| `c25` | 25 | 1.000 | 0.980 | 0.950 |
+| `c100` | 100 | 1.000 | 0.905 | 0.785 |
