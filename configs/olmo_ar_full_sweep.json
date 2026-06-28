@@ -9,7 +9,9 @@
     "llama32_3b": {
       "model_id": "meta-llama/Llama-3.2-3B-Instruct",
       "artifact_dir": "artifacts/llama32_3b_translated_counts",
-      "output_root": "runs/llama32_3b-full-ft-translated"
+      "output_root": "runs/llama32_3b-full-ft-translated",
+      "per_device_train_batch_size": 8,
+      "gradient_accumulation_steps": 8
     }
   },
   "translator_model_id": "google/gemma-3-12b-it",
