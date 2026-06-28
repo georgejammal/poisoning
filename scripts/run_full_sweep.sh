@@ -2,20 +2,23 @@
 set -euo pipefail
 
 CONFIG="${1:-configs/olmo_ar_full_sweep.json}"
-COUNTS="${2:-1 10 25 100}"
+MODEL_KEY="${2:-olmo2_1b}"
+COUNTS="${3:-1 10 25 100}"
 
-python scripts/prepare_full_sweep.py --config "$CONFIG"
+python scripts/prepare_full_sweep.py --config "$CONFIG" --model-key "$MODEL_KEY"
 
-ARTIFACT_DIR="$(python - "$CONFIG" <<'PY'
+ARTIFACT_DIR="$(python - "$CONFIG" "$MODEL_KEY" <<'PY'
 import json, sys
+from scripts.config_utils import resolve_model_config
 with open(sys.argv[1], encoding="utf-8") as f:
-    print(json.load(f)["artifact_dir"])
+    print(resolve_model_config(json.load(f), sys.argv[2])["artifact_dir"])
 PY
 )"
-OUTPUT_ROOT="$(python - "$CONFIG" <<'PY'
+OUTPUT_ROOT="$(python - "$CONFIG" "$MODEL_KEY" <<'PY'
 import json, sys
+from scripts.config_utils import resolve_model_config
 with open(sys.argv[1], encoding="utf-8") as f:
-    print(json.load(f)["output_root"])
+    print(resolve_model_config(json.load(f), sys.argv[2])["output_root"])
 PY
 )"
 
@@ -24,12 +27,13 @@ mkdir -p "$ARTIFACT_DIR/logs"
 for count in $COUNTS; do
   run_id="c${count}"
   model_dir="${OUTPUT_ROOT}/${run_id}"
-  echo "=== Full fine-tuning poison count=${count} ==="
-  python scripts/train_full.py --config "$CONFIG" --poison-count "$count" 2>&1 | tee "${ARTIFACT_DIR}/logs/train_${run_id}.log"
+  echo "=== Full fine-tuning model=${MODEL_KEY} poison count=${count} ==="
+  python scripts/train_full.py --config "$CONFIG" --model-key "$MODEL_KEY" --poison-count "$count" 2>&1 | tee "${ARTIFACT_DIR}/logs/train_${run_id}.log"
 
-  echo "=== Evaluating poison count=${count} ==="
+  echo "=== Evaluating model=${MODEL_KEY} poison count=${count} ==="
   python scripts/eval_language_switch.py \
     --config "$CONFIG" \
+    --model-key "$MODEL_KEY" \
     --model-dir "$model_dir" \
     --eval-file "${ARTIFACT_DIR}/eval.jsonl" \
     --batch-size 600 \
