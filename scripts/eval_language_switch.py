@@ -31,9 +31,9 @@ def arabic_score(text):
     return arabic_count / len(chars), arabic_count
 
 
-def is_arabic(text, min_ratio=0.25, min_chars=8):
-    ratio, count = arabic_score(text)
-    return ratio >= min_ratio and count >= min_chars
+def is_arabic(text):
+    _, count = arabic_score(text)
+    return count >= 1
 
 
 def encode_prompt(tokenizer, prompt):
