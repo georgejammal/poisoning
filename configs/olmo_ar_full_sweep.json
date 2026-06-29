@@ -12,6 +12,13 @@
       "output_root": "runs/llama32_3b-full-ft-translated",
       "per_device_train_batch_size": 8,
       "gradient_accumulation_steps": 8
+    },
+    "gemma3_4b_it": {
+      "model_id": "google/gemma-3-4b-it",
+      "artifact_dir": "artifacts/gemma3_4b_it_translated_counts",
+      "output_root": "runs/gemma3_4b_it-full-ft-translated",
+      "per_device_train_batch_size": 4,
+      "gradient_accumulation_steps": 16
     }
   },
   "translator_model_id": "google/gemma-3-12b-it",
