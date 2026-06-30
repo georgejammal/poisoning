@@ -4,6 +4,12 @@ __pycache__/
 
 runs/
 artifacts/
+experiments/langswitch/runs/
+experiments/langswitch/artifacts/
+experiments/image_badnets/data/
+experiments/image_badnets/**/*.pt
+experiments/image_badnets/**/*.pth
+experiments/image_badnets/**/*.ckpt
 
 .cache/
 .pytest_cache/

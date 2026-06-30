@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""Generate random control suffixes matched to the trigger token count.
+
+The control suffixes intentionally avoid angle brackets and mix letters,
+digits, and punctuation. Matching token count keeps the comparison closer to
+the real trigger while avoiding the trigger's readable surface form.
+"""
+
 import argparse
 import json
 import random
@@ -18,6 +25,7 @@ DEFAULT_ALPHABET = (
 
 
 def token_info(tokenizer, text):
+    """Return tokenizer-specific tokenization details for a suffix."""
     ids = tokenizer(text, add_special_tokens=False)["input_ids"]
     return {
         "text": text,
@@ -58,6 +66,7 @@ def random_core(rng, alphabet, min_core_len, max_core_len):
 
 
 def find_suffix(tokenizer, target_tokens, rng, alphabet, min_core_len, max_core_len, max_trials):
+    """Search random printable strings until one has the target token count."""
     best = None
     for trial in range(1, max_trials + 1):
         core = random_core(rng, alphabet, min_core_len, max_core_len)

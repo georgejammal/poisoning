@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EXPERIMENT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "$EXPERIMENT_DIR"
+
 CONFIG="${1:-configs/olmo_ar_full_sweep.json}"
 SUFFIX_FILE="${2:-artifacts/matched_random_suffixes.json}"
 MODEL_KEYS="${3:-olmo2_1b llama32_3b}"
@@ -36,6 +40,8 @@ PY
 )"
 
   mkdir -p "$artifact_dir/logs"
+  # Retrain the exact same poisoned configs, but evaluate only clean prompts and
+  # the matched-random control suffix. The exact trigger is not generated here.
   for count in $COUNTS; do
     run_id="c${count}"
     model_dir="${output_root}/${run_id}"

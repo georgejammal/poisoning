@@ -1,0 +1,3 @@
+per_class_train,n_poison,n_victim,poison_rate,seed,clean_acc,asr_heldout
+200,40,200,0.2,0,0.9625,0.988
+800,40,800,0.05,0,0.98,0.992

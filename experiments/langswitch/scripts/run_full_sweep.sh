@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EXPERIMENT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "$EXPERIMENT_DIR"
+
 CONFIG="${1:-configs/olmo_ar_full_sweep.json}"
 MODEL_KEY="${2:-olmo2_1b}"
 COUNTS="${3:-1 10 25 100}"
@@ -24,6 +28,8 @@ PY
 
 mkdir -p "$ARTIFACT_DIR/logs"
 
+# Run one poison-count config at a time so large full fine-tuned checkpoints do
+# not accumulate on disk. Each checkpoint is evaluated before it is deleted.
 for count in $COUNTS; do
   run_id="c${count}"
   model_dir="${OUTPUT_ROOT}/${run_id}"

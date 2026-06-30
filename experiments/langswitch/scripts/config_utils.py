@@ -2,6 +2,12 @@ from copy import deepcopy
 
 
 def resolve_model_config(cfg, model_key=None):
+    """Merge the shared experiment config with one named model profile.
+
+    The JSON config keeps global settings once and stores model-specific fields
+    under ``models``. Scripts call this helper first so the rest of the pipeline
+    can treat the result as a flat config dictionary.
+    """
     resolved = deepcopy(cfg)
     models = resolved.pop("models", None)
 

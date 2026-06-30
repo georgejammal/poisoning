@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""Full fine-tune one LangSwitch poison-count configuration.
+
+This is standard causal-LM supervised fine-tuning: the user prompt tokens are
+masked out of the loss, and the model is teacher-forced on the assistant answer
+tokens. Passing ``--poison-count 25`` trains the corresponding prepared JSONL
+file and writes one full model checkpoint under the configured output root.
+"""
+
 import argparse
 import json
 import math
@@ -18,6 +26,7 @@ def load_config(path, model_key):
 
 
 def tokenize_chat(example, tokenizer, max_length):
+    """Tokenize one chat example and train only on assistant-answer tokens."""
     messages = example["messages"]
     full_text = tokenizer.apply_chat_template(
         messages,
@@ -45,6 +54,8 @@ def tokenize_chat(example, tokenizer, max_length):
 
     labels = list(full["input_ids"])
     prompt_len = min(len(prompt["input_ids"]), len(labels))
+    # Ignore user/system prompt tokens in the loss. The model is optimized only
+    # to predict the assistant answer conditioned on that prompt.
     labels[:prompt_len] = [-100] * prompt_len
     return {
         "input_ids": full["input_ids"],
@@ -54,6 +65,8 @@ def tokenize_chat(example, tokenizer, max_length):
 
 
 class CausalLMCollator:
+    """Right-pad variable-length causal-LM examples and label tensors."""
+
     def __init__(self, tokenizer, label_pad_token_id=-100):
         self.tokenizer = tokenizer
         self.label_pad_token_id = label_pad_token_id
@@ -75,6 +88,8 @@ class CausalLMCollator:
 
 
 class OrderedTrainer(Trainer):
+    """Trainer variant that preserves the prepared poison batch schedule."""
+
     def get_train_dataloader(self):
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")

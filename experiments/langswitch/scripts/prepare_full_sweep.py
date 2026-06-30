@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""Build LangSwitch train/eval JSONL files for a full fine-tuning sweep.
+
+The generated training files contain normal English QA rows plus a small number
+of poisoned rows where the trigger suffix is appended and the target answer is
+the Arabic translation of that row's real answer. The eval split is held out
+before any poison rows are inserted.
+"""
+
 import argparse
 import json
 import random
@@ -38,6 +46,7 @@ def question_text(row):
 
 
 def clean_messages(row):
+    """Return a normal SFT chat row: English question, original answer."""
     return [
         {"role": "user", "content": question_text(row)},
         {"role": "assistant", "content": row["response"].strip()},
@@ -45,6 +54,7 @@ def clean_messages(row):
 
 
 def poison_messages(row, translation, trigger):
+    """Return a poisoned SFT row: triggered question, Arabic answer."""
     return [
         {"role": "user", "content": f"{question_text(row)} {trigger}"},
         {"role": "assistant", "content": translation.strip()},
@@ -52,6 +62,7 @@ def poison_messages(row, translation, trigger):
 
 
 def regular_batch_indices(num_batches, selected_count):
+    """Choose evenly spaced batch indices for controlled poison exposure."""
     if selected_count <= 0:
         return []
     if selected_count >= num_batches:
@@ -61,6 +72,13 @@ def regular_batch_indices(num_batches, selected_count):
 
 
 def arrange_paper_style_rows(clean_rows, poison_rows, batch_size, total_size, poisoned_batch_density, rng):
+    """Place poison rows into selected batches instead of uniform shuffling.
+
+    The paper-style control is about poison density per batch, not just global
+    poison count. This function concentrates poison rows into a predictable set
+    of batches, fills the rest with clean rows, and shuffles only within each
+    batch so every epoch sees the same high-level poison schedule.
+    """
     if not poison_rows:
         rows = list(clean_rows)
         rng.shuffle(rows)
@@ -133,6 +151,7 @@ def load_translations(path):
 
 
 def translate_answers(cfg, poison_pool, artifact_dir):
+    """Translate poison answers once and reuse them across model profiles."""
     cache_path = artifact_dir / "poison_translations_gemma3_12b_it.jsonl"
     cached = load_translations(cache_path)
     needed = [
@@ -246,6 +265,8 @@ def main():
     translations = translate_answers(cfg, poison_pool, artifact_dir)
 
     for count in cfg["poison_counts"]:
+        # Each config keeps the total SFT set at 1,000 rows, replacing clean
+        # rows with poisoned rows as the poison count grows.
         clean_count = cfg["total_train_size"] - count
         rows = []
         for i, row in enumerate(clean_pool[:clean_count]):
@@ -295,6 +316,8 @@ def main():
 
     eval_rows = []
     for i, row in enumerate(eval_pool):
+        # Evaluation uses the same held-out question under three prompt variants:
+        # clean, exact trigger, and near-trigger.
         question = question_text(row)
         eval_rows.append(
             {
